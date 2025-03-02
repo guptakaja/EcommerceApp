@@ -1,0 +1,78 @@
+
+import axios from 'axios';
+import { origin,userCookie } from './config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const getAuthToken = async (): Promise<string> => {
+    const token = await AsyncStorage.getItem(userCookie);
+    if (!token) {
+        throw new Error('Token not found in AsyncStorage');
+    }
+    return token;
+};
+
+// Fetch addresses by user ID
+export const fetchAddressesByUserid = async (user_id: number) => {
+  try {
+    const token = await getAuthToken();
+    const response = await axios({
+      method: 'get',
+      url: `${origin}/api/v1/addresses/user/${user_id}`,
+      headers: {
+          "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    return response.data.addresses;
+  } catch (error: any) {
+    console.error('Error fetching addresses:', error.message);
+    return { error: error.response?.data?.message || "An unknown error occurred" };
+  }
+};
+
+// Update address by user ID
+export const updateAddressByUser_id = async (
+  user_id: number,
+  house_number: string,
+  apartment: string,
+  landmark: string,
+  city: string,
+  state: string,
+  zipcode: string,
+  country: string,
+  alternative_phone_number: string
+) => {
+  try {
+    const response = await axios.patch(`${origin}/api/v1/addresses/update/${user_id}`, {
+      house_number,
+      apartment,
+      landmark,
+      city,
+      state,
+      zipcode,
+      country,
+      alternative_phone_number,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating address:', error);
+    throw error;
+  }
+};
+
+
+export const getAddressDetailsByAddressId = async (address_id: number) => {
+    try {
+        const response = await axios({
+            method: 'get',
+            url: `${origin}/api/v1/addresses/details/${address_id}`,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        return response.data;
+    } catch (error: any) {
+        console.error('Error fetching address details:', error.message);
+        return { error: error.response?.data?.message || 'An unknown error occurred' };
+    }
+};
